@@ -263,7 +263,9 @@ if __name__=='__main__':
                                         faces=leaf['faces'])
 
 
-            # what are the bounding boxes?
+            # TODO: generate convex hull
+
+            # update 
             x_min, y_min, z_min = np.min(part_mesh.vertices, axis=0)
             x_max, y_max, z_max = np.max(part_mesh.vertices, axis=0)
             # representation of the box is given by these 6 numbers!

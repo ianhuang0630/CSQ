@@ -20,6 +20,7 @@ def sample_from_bbox(ranges, num_samples):
                          for i in range(3)]).transpose()
     return samples
 
+
 def update_IOUs(matrix, superquadrics, part_bboxes, part_meshes, partid2idx):
     """
     Args:
@@ -31,24 +32,17 @@ def update_IOUs(matrix, superquadrics, part_bboxes, part_meshes, partid2idx):
         matrix
     """
 
+    
     # IOU = # pts in both/ # pts in either.
     id_bbox_supe = []
     for id_, superquadric_mesh in superquadrics:
         id_bbox_supe.append((id_, {'min': np.min(superquadric_mesh.vertices, axis=0),
-                             'max': np.max(superquadric_mesh.vertices, axis=0)}))
+                                   'max': np.max(superquadric_mesh.vertices, axis=0)}))
     id_bbox_part= []
-    id_bbox_part2 = []
     for id_, part_mesh in part_meshes:
         id_bbox_part.append((id_, {'min': np.min(part_mesh.vertices, axis=0),
                              'max': np.max(part_mesh.vertices, axis=0)}))
 
-    for id_, part_bbox in part_bboxes:
-        id_bbox_part2.append((id_, {'min': np.array([part_bbox['x_min'],
-                                                     part_bbox['y_min'],
-                                                     part_bbox['z_min']]),
-                                    'max': np.array([part_bbox['x_max'],
-                                                     part_bbox['y_max'],
-                                                     part_bbox['z_max']])}))
     # for each bounding box, sample some points based on the volume of the box
 
     density = 1e4

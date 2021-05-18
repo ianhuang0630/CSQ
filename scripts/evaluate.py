@@ -36,7 +36,7 @@ from get_parts import *
 from metrics import *
 
 
-from mayavi import mlab
+# from mayavi import mlab
 
 
 def get_shape_configuration(use_cuboids):
@@ -112,6 +112,11 @@ def main(argv):
         '--save_individual_IOUs',
         action="store_true",
         help="saves the IOU with partnet parts for every 3d model evaluated."
+        )
+    parser.add_argument(
+        '--recenter_superquadrics',
+        action="store_true",
+        help="recenters the superquadrics to the part bounding boxes before evaluating metric"
         )
 
     add_dataset_parameters(parser)
@@ -350,6 +355,22 @@ def main(argv):
         # get the bounding box information
         part_id_meshes = [(leaf['id'], leaf['bbox_mesh']) for leaf in leaf_parts]
         part_id_bboxes = [(leaf['id'], leaf['bbox']) for leaf in leaf_parts]
+
+        if args.recenter_superquadrics: # recenter superquadric predictions
+            # moving the superquadrics to the part centers
+            supe_vert = np.vstack([el[1].vertices for el in superquadric_id_meshes])
+            assert supe_vert.shape[1] == 3
+            supe_center = 0.5*(np.max(supe_vert, axis=0) + np.min(supe_vert, axis=0))
+
+            part_vert = np.vstack([el[1].vertices for el in part_id_meshes])
+            assert part_vert.shape[1] == 3
+            part_center = 0.5*(np.max(part_vert, axis=0) + np.min(part_vert, axis=0))
+
+            for el in superquadric_id_meshes:
+                el[1].vertices = el[1].vertices - supe_center + part_center
+
+
+
         # TODO: push the parts and superquadric meshes through the metric function
         IOU_matrix, delta_IOU = update_IOUs(IOU_matrix,
                                             superquadric_id_meshes,
@@ -386,6 +407,7 @@ def main(argv):
                          'indiv_IOU': delta_IOU,
                          'id2labels': {leaf['id']: leaf['label']
                                        for leaf in leaf_parts},
+                         'part_id2idx': part_id_to_IOUidx,
                          'part_bboxes': part_id_bboxes,
                          'part_mesh': part_id_meshes,
                          'superquadrics': superquadric_id_meshes}
