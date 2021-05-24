@@ -246,7 +246,7 @@ if __name__=='__main__':
         partnet_extent = partnet_max - partnet_min
 
         for leaf in leaves:
-            leaf['vertices'] =  leaf['vertices'] - partnet_center
+            leaf['vertices'] = leaf['vertices'] - partnet_center
 
         # shapenet_mesh_max = np.max(np.linalg.norm(shapenet_mesh_vertices, axis=1))
         # partnet_meshes_max = max([np.max(np.linalg.norm(el['vertices'], axis=1)) for el in leaves])
@@ -263,9 +263,12 @@ if __name__=='__main__':
                                         faces=leaf['faces'])
 
 
-            # TODO: generate convex hull
+            # generate convex hull
+            part_mesh_convex_enclosure = trimesh.convex.convex_hull(part_mesh,
+                                                                    'QbB Pp Qt')
+            leaf['convex_mesh'] = part_mesh_convex_enclosure
 
-            # update 
+            # get bounding box
             x_min, y_min, z_min = np.min(part_mesh.vertices, axis=0)
             x_max, y_max, z_max = np.max(part_mesh.vertices, axis=0)
             # representation of the box is given by these 6 numbers!
