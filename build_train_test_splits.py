@@ -79,13 +79,3 @@ train_test_split_df = pd.DataFrame.from_dict(data, orient='columns')
 train_test_split_df.to_csv('{}_train_val_test_split.csv'.format(OBJ_CAT))
 
 print("Done.")
-# structurenet_json = os.path.join(STRUCTURENET_DIR,
-#     '{}_hier'.format(OBJ_CAT), '{}.json'.format(model_id))
-# assert(os.path.exists(structurenet_json))
-# partnet_json = os.path.join(PARTNET_DIR, str(model_id),
-#         'result_after_merging.json')
-# assert(os.path.exists(partnet_json))
-# leaves = collect_leaf_nodes(structurenet_json)
-# leaves = find_corresponding_meshes(partnet_json, leaves)
-# partnet_mesh_dir = os.path.join(PARTNET_DIR, str(model_id), 'objs')
-# leaves = load_meshes(leaves, partnet_mesh_dir)
