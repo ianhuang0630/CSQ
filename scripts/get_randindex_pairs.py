@@ -131,11 +131,13 @@ if __name__ == '__main__':
 
         # save the samples
         model_name = model[:-len('.pkl')]
+        pickle_path = os.path.join(samples_output_dir, '{}.pkl'.format(model_name))
 
         # samples_output_dir/model_name.pkl
-        with open(os.path.join(samples_output_dir, '{}.pkl'.format(model_name)),
-                  'wb') as f:
+        with open(pickle_path, 'wb') as f:
             pickle.dump({'samples': samples, 'part_id_membership': memberships}, f)
+
+        print('Saved at {}.'.format(pickle_path))
 
 
 
