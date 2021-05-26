@@ -132,6 +132,10 @@ class BaseDataset(Dataset):
             transform: Callable that applies a transform to a sample
         """
         self._dataset_object = dataset_object
+
+        # NOTE: assuming that dataset has tag attribute
+        self._tags = dataset_object._tags
+
         print ("%d models in total ..." % (len(self._dataset_object)))
 
         # Number of samples to use for supervision
@@ -149,6 +153,9 @@ class BaseDataset(Dataset):
         return len(self._dataset_object)
 
     def __getitem__(self, idx):
+
+        model_tag = self._tags[idx]
+
         m = self._dataset_object[idx]
         # print m.path_to_mesh_file
         # print m.path_to_tsdf_file
@@ -168,7 +175,7 @@ class BaseDataset(Dataset):
         if self.transform:
             datapoint = self.transform(datapoint)
 
-        return datapoint
+        return model_tag, datapoint
 
     def get_random_datapoint(self, idx=None):
         if idx is None:
