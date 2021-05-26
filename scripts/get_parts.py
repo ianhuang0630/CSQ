@@ -264,8 +264,12 @@ if __name__=='__main__':
 
 
             # generate convex hull
-            part_mesh_convex_enclosure = trimesh.convex.convex_hull(part_mesh,
-                                                                    'QbB Pp Qt')
+            try:
+                part_mesh_convex_enclosure = trimesh.convex.convex_hull(part_mesh,
+                                                                        'QbB Pp Qt')
+            except:
+                print('Something went wrong with extraction of convex hull for leaf id {} of model id {}'.format(part_id, sid))
+                part_mesh_convex_enclosure = None
             leaf['convex_mesh'] = part_mesh_convex_enclosure
 
             # get bounding box
