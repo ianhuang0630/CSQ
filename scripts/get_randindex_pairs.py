@@ -18,6 +18,23 @@ part_output_dir = '/orion/u/ianhuang/superquadric_parsing/parts_output'
 category_id = "03001627"
 samples_output_dir = '/orion/u/ianhuang/superquadric_parsing/parts_randindex_samples'
 
+
+def membership2neighborpairs(membership):
+    """
+    Membership is a list, where each element corresponds to a list of partid's that a single
+    point corresponds to. There are N elements within membership
+
+    """
+    pairs = []
+    for i in range(len(membership)):
+        for j in range(i+1, len(membership)):
+            # are points i and j related?
+            if len(set(membership[i]).intersection(set(membership[j]))) > 0:
+                pairs.append((i, j))
+    pairs = np.array(pairs).transpose() # 2xnum_pairs
+    return pairs
+
+
 def sample_N_points_within_cvxs(N, leaves, use_bbox_as_backup=False):
     """
     Returns a list of N points that are within the meshes. (Nx3)
@@ -127,6 +144,8 @@ if __name__ == '__main__':
         samples, memberships = sample_N_points_within_cvxs(N, leaves,
                                                            use_bbox_as_backup = True)
 
+        neighborpairs = membership2neighborpairs(memberships)
+
         print('Done.')
 
         # save the samples
@@ -135,7 +154,9 @@ if __name__ == '__main__':
 
         # samples_output_dir/model_name.pkl
         with open(pickle_path, 'wb') as f:
-            pickle.dump({'samples': samples, 'part_id_membership': memberships}, f)
+            pickle.dump({'samples': samples,
+                         'part_id_membership': memberships,
+                         'neighbor_pairs': neighborpairs}, f)
 
         print('Saved at {}.'.format(pickle_path))
 
