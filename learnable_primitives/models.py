@@ -6,6 +6,11 @@ import torch.optim as optim
 from torchvision import models
 
 
+# for things later on
+
+from .primitives import inside_outside_function, transform_to_primitives_centric_system
+
+
 class NetworkParameters(object):
     def __init__(self, architecture, n_primitives=32,
                  mu=0.0, sigma=0.001, add_gaussian_noise=False,
@@ -523,6 +528,82 @@ def train_on_batch_pair(
         debug_stats
     )
 
+def train_on_batch_w_parts(
+        model,
+        optimizer,
+        loss_fn,
+        X,
+        y_target,
+        regularizer_terms,
+        sq_sampler,
+        loss_options,
+        P, parts_points,
+        indices_w_parts
+):
+    """
+    this applies the regluarization 
+    """
+
+    optimizer.zero_grad()
+    y_hat = model(X)
+
+
+    # NOTE: P and part_points might have elements = None, when part information is not available.
+    # in that case, the part loss should return 0 for that element.
+
+    y_parts = y_hat[indices_w_parts, ...]
+
+    # are there any samples within this batch that have parts info?
+    if y_parts.shape[0] > 0:
+        B = parts_points.shape[0]  # batch size # TODO change
+        N = parts_points.shape[1]  # number of points per sample # TODO change
+        M = y_parts[0].shape[1]  # number of primitives
+        # S = sampler.n_samples  # number of points sampled from the SQ # TODO change
+
+        probs = y_parts[0].view(B, M)
+        translations = y_parts[1].view(B, M, 3)
+        rotations = y_parts[2].view(B, M, 4)
+        shapes = y_parts[3].view(B, M, 3)
+        epsilons = y_parts[4].view(B, M, 2)
+        tapering_params = y_parts[5].view(B, M, 2)
+
+        # TODO: get the translations and rotations, transform the points by the inverse of both
+        X_transformed = transform_to_primitives_centric_system(
+            parts_points,
+            translations,
+            rotations
+        )
+        #  X_transformed = BxNxMx3 (since each superquadric has its own translation and rotation)
+
+        F = inside_outside_function(X_transformed, shapes, epsilons)
+        import ipdb; ipdb.set_trace()
+        # inside if F <= 1
+        # TODO: O = sigmoid(1-F)
+        # O = (BxNxM) --> O' = (BM)xN
+        # O' O'^T = (BM) x Nx N --> OO^T = (BxMxNxN)
+        # sum(probs (BxM) * OO^T (BxMxNxN), axis=1)  = BxNxN
+        # this becomes Q
+        # RI = sum_lowerhalf (Q*P + (1-Q) * (1-P))
+
+
+
+
+    # TODO: use the inside/outside function under learnable_primitives/primitives
+
+
+
+    # carry on with normal loss function 
+
+    loss, debug_stats = loss_fn(
+        y_hat,
+        y_target,
+        regularizer_terms,
+        sq_sampler,
+        loss_options
+    )
+
+
+    pass
 
 
 def train_on_batch(
@@ -556,6 +637,9 @@ def train_on_batch(
         [x.data if hasattr(x, "data") else x for x in y_hat],
         debug_stats
     )
+
+
+
 
 
 def get_gaussian_noise_layer(add_gaussian_noise, mu=0.0, sigma=0.01):

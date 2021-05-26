@@ -167,11 +167,12 @@ class BatchProvider(object):
     def next(self):
         idxs = np.random.randint(0, self.cache_size, size=self.batch_size)
         with self.cache_lock:
-            return self.X[idxs], self.y[idxs]
+            return [self.tags[idx] for idx in idxs], self.X[idxs], self.y[idxs]
 
     def _start_producer_thread(self):
         # This is going to be the amount of cached elements
         N = self.cache_size
+        self.tags = []*N
         self.X = torch.empty((N,) + self.input_shape, dtype=torch.float32)
         self.y = torch.empty((N,) + self.output_shape, dtype=torch.float32)
 
@@ -197,7 +198,7 @@ class BatchProvider(object):
                     return
 
                 while True:
-                    sample = self._dataset.get_random_datapoint()
+                    model_tag, sample = self._dataset.get_random_datapoint()
                     X = sample[0]
                     y = sample[1]
                     if X is None or y is None:
@@ -208,6 +209,7 @@ class BatchProvider(object):
                 # unlock afterwards
                 with self.cache_lock:
                     try:
+                        self.tags[idx] = model_tag
                         self.X[idx] = X
                         self.y[idx] = y
                     except Exception as e:
