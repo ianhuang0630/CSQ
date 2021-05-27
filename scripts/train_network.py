@@ -312,7 +312,7 @@ def main(argv):
             args.steps_per_epoch
         )
         for b, sample in zip(range(args.steps_per_epoch), yield_infinite(train_bp)):
-            X, y_target = sample
+            tag, X, y_target = sample
             X, y_target = X.to(device), y_target.to(device)
 
             # Train on batch

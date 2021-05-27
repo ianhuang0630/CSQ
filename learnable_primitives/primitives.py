@@ -79,9 +79,11 @@ def inside_outside_function(X, shape_params, epsilons):
     X = ((X > 0).float() * 2 - 1) * torch.max(torch.abs(X), X.new_tensor(1e-6))
 
     F = ((X[:, :, :, 0] / a1)**2)**(1./e2)
-    F += ((X[:, :, :, 1] / a2)**2)**(1./e2)
+    # F += ((X[:, :, :, 1] / a2)**2)**(1./e2)
+    F = F+((X[:, :, :, 1] / a2)**2)**(1./e2)
     F = F**(e2 / e1)
-    F += ((X[:, :, :, 2] / a3)**2)**(1./e1)
+    # F += ((X[:, :, :, 2] / a3)**2)**(1./e1)
+    F = F+((X[:, :, :, 2] / a3)**2)**(1./e1)
 
     # Sanity check to make sure that we have the expected size
     assert F.shape == (B, N, M)

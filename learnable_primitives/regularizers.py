@@ -55,30 +55,48 @@ def entropy_bernoulli(parameters):
 
 
 def overlapping(F, X):
-    """Penalize primitives that are inside other primitives
+    k = 2 # how many superquadrics are allowed to overlap
 
-        Arguments:
-        -----------
-        F: Tensor of shape BxNxM for the X points
-        X: Tensor of shape BxNxMx3 containing N points transformed in the
-           primitive's centric coordinate systems
-    """
-    assert F.shape[0] == X.shape[0]
-    assert F.shape[1] == X.shape[1]
-    assert F.shape[2] == X.shape[2]
-    assert X.shape[3] == 3
-    assert len(F.shape) == 3
-    assert len(X.shape) == 4
-    B, N, M = F.shape
+    inside_outside = torch.sigmoid(1-F)
+    num_inside = torch.sum(inside_outside, axis=-1)
 
-    loss = F.new_tensor(0)
-    for j in range(M):
-        f = F[F[:, :, j] > 0.5]
-        if len(f) > 0:
-            f[:, j] = f.new_tensor(0)
-            loss += torch.max(f - f.new_tensor(0.5), f.new_tensor(0)).mean()
-
+    # L2-Norm  squared of violation over k
+    loss = torch.mean(torch.sum(torch.nn.functional.relu(num_inside - k) ** 2, axis = -1))
     return loss
+
+
+# XXX: overwritten with a differentiable version above
+
+# def overlapping(F, X):
+#     """Penalize primitives that are inside other primitives
+# 
+#         Arguments:
+#         -----------
+#         F: Tensor of shape BxNxM for the X points
+#         X: Tensor of shape BxNxMx3 containing N points transformed in the
+#            primitive's centric coordinate systems
+#     """
+# 
+#     # XXX: X isn't even used, and is set to X_SQ from the layer above,
+#     # which triggers the following assert warnings
+# 
+#     # assert F.shape[0] == X.shape[0]
+#     # assert F.shape[1] == X.shape[1]
+#     # assert F.shape[2] == X.shape[2]
+#     # assert X.shape[3] == 3
+#     assert len(F.shape) == 3
+#     # assert len(X.shape) == 4
+#     B, N, M = F.shape
+# 
+#     loss = F.new_tensor(0)
+# 
+#     for j in range(M):
+#         f = F[F[:, :, j] > 0.5]
+#         if len(f) > 0:
+#             f[:, j] = f.new_tensor(0)
+#             loss += torch.max(f - f.new_tensor(0.5), f.new_tensor(0)).mean()
+# 
+#     return loss
 
 
 def get(regularizer, parameters, F, X_SQ, arguments):

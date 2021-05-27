@@ -172,7 +172,7 @@ class BatchProvider(object):
     def _start_producer_thread(self):
         # This is going to be the amount of cached elements
         N = self.cache_size
-        self.tags = []*N
+        self.tags = [None]*N
         self.X = torch.empty((N,) + self.input_shape, dtype=torch.float32)
         self.y = torch.empty((N,) + self.output_shape, dtype=torch.float32)
 

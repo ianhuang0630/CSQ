@@ -9,7 +9,7 @@
 #SBATCH --gres=gpu:titanxp:1
 
 #SBATCH --job-name="train_sq"
-#SBATCH --output=/orion/u/ianhuang/test_sq_chair_pair_v0.out
+#SBATCH --output=/orion/u/ianhuang/train_sq_chair_traintest_antioverlap_v0.out
 
 # only use the following if you want email notification
 ####SBATCH --mail-user=youremailaddress
@@ -29,8 +29,7 @@ echo NPROCS=$NPROCS
 # can try the following to list out which GPU you have access to
 #srun /usr/local/cuda/samples/1_Utilities/deviceQuery/deviceQuery
 
-# srun bash run_test_recenter_baseline.sh # run_test_recenter_pair.sh
-srun bash run_test_recenter_pair.sh
+srun bash run_traintest_antioverlap.sh
 
 # done
 echo "Done"

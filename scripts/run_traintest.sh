@@ -14,5 +14,5 @@
 # ./train_network.py /orion/group/ShapeNetManifold_10000/02871439/ myruns/bookshelf/ --use_sq --lr 1e-4 --n_primitives 20 --train_with_bernoulli --dataset_type shapenet_v2 --use_chamfer --run_on_gpu
 # ./train_network.py /orion/group/ShapeNetManifold_10000/02933112/ myruns/cabinet/ --use_sq --lr 1e-4 --n_primitives 20 --train_with_bernoulli --dataset_type shapenet_v2 --use_chamfer --run_on_gpu
 
-
-./train_network.py /orion/group/ShapeNetManifold_10000/03001627/ myruns/chair_traintest/ --use_sq --lr 1e-4 --n_primitives 20 --train_with_bernoulli --dataset_type shapenet_v2 --use_chamfer --run_on_gpu --train_test_splits_file ../Chair_train_val_test_split.csv
+# myruns/chair_traintest/ \
+./train_network.py /orion/group/ShapeNetManifold_10000/03001627/ myruns2/chair_traintest/ --use_sq --lr 1e-4 --n_primitives 20 --train_with_bernoulli --dataset_type shapenet_v2  --run_on_gpu --train_test_splits_file ../Chair_train_val_test_split.csv --parsimony_regularizer_weight 0.0001 --overlapping_regularizer_weight 0.0001 --regularizer_type parsimony_regularizer --use_chamfer

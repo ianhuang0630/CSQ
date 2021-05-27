@@ -12,8 +12,9 @@ from metrics import get_signed_distance
 from tqdm import tqdm
 
 
-np.seed(7)
-N = 10000 # default value
+np.random.seed(7)
+
+N = 1000 # default value
 part_output_dir = '/orion/u/ianhuang/superquadric_parsing/parts_output'
 category_id = "03001627"
 samples_output_dir = '/orion/u/ianhuang/superquadric_parsing/parts_randindex_samples'
@@ -25,15 +26,47 @@ def membership2neighborpairs(membership):
     point corresponds to. There are N elements within membership
 
     """
-    pairs = []
-    for i in range(len(membership)):
-        for j in range(i+1, len(membership)):
-            # are points i and j related?
-            if len(set(membership[i]).intersection(set(membership[j]))) > 0:
-                pairs.append((i, j))
+
+    # faster way:
+    groups2pt_idx = {}
+    for pt_idx, groups in enumerate(membership):
+        for group in groups:
+            if group not in groups2pt_idx:
+                groups2pt_idx[group] = [pt_idx]
+            else:
+                groups2pt_idx[group].append(pt_idx)
+
+    pairs = set([])
+    for group in groups2pt_idx:
+        pt_indices = groups2pt_idx[group]
+        for i in pt_indices:
+            for j in pt_indices:
+                pairs.add((i , j))
+
+    pairs = list(pairs)
+
+    # pairs = []
+    # for i in range(len(membership)):
+    #     for j in range(i+1, len(membership)):
+    #         # are points i and j related?
+    #         if len(set(membership[i]).intersection(set(membership[j]))) > 0:
+    #             pairs.append((i, j))
     pairs = np.array(pairs).transpose() # 2xnum_pairs
     return pairs
 
+def get_bbox_volume(leaf):
+
+    return (leaf['bbox']['x_max'] - leaf['bbox']['x_min'])\
+        * (leaf['bbox']['y_max'] - leaf['bbox']['y_min'])\
+        * (leaf['bbox']['z_max'] - leaf['bbox']['z_min'])
+
+def generate_N_points_within_bbox(N, bbox_bounds):
+
+    mins = np.array([bbox_bounds['x_min'], bbox_bounds['y_min'], bbox_bounds['z_min']])
+    maxs = np.array([bbox_bounds['x_max'], bbox_bounds['y_max'], bbox_bounds['z_max']])
+
+    return np.vstack([np.random.uniform(mins[i], maxs[i], N)
+                      for i in range(3)]).transpose()
 
 def sample_N_points_within_cvxs(N, leaves, use_bbox_as_backup=False):
     """
@@ -41,40 +74,43 @@ def sample_N_points_within_cvxs(N, leaves, use_bbox_as_backup=False):
     For each point, a membership list is also returned.
     """
 
-    # sample proportional to the bounding box size
-
-    meshes = [leaf['convex_mesh'] for leaf in leaves
-              if leaf['convex_mesh'] is not None]
-    mins = np.min(np.vstack([np.min(mesh.vertices, axis=0)
-                             for mesh in meshes]), axis=0)
-    maxs = np.max(np.vstack([np.max(mesh.vertices, axis=0)
-                             for mesh in meshes]), axis=0)
-
     # some of these meshes are not going to have a convex.
     # use_bbox_as_backup will step in and be used as a subsitute in that case
     # if `use_bbox_as_backup == True`.
 
     cvx_meshes = []
     part_ids = []
+    volumes = []
+    bboxes = []
     for leaf in leaves:
         if leaf['convex_mesh'] is None:
             if use_bbox_as_backup:
                 cvx_meshes.append(leaf['bbox_mesh'])
-                part_ids.append(leaf['id'])
             else:
                 continue
         else:
             cvx_meshes.append(leaf['convex_mesh'])
-            part_ids.append(leaf['id'])
+
+        part_ids.append(leaf['id'])
+        volumes.append(get_bbox_volume(leaf))
+        bboxes.append(leaf['bbox'])
 
     # sample till all points fall into the desired convexes
+    total_volume = sum(volumes)
+    samples_per_leaf_bbox = [int(volumes[i]/total_volume * N) for i in range(len(volumes)-1)]
+    samples_per_leaf_bbox += [N - sum(samples_per_leaf_bbox)]
+
+    assert len(samples_per_leaf_bbox) == len(volumes)
 
     samples = [] # this will eventually be a Nx3 matrix
     memberships = [] # this will eventually be a length N_list, where each list is a list of part_ids
+
     while True:
         # sample N points
-        candidates = np.vstack([np.random.uniform(mins[i], maxs[i], N)
-                                for i in range(3)]).transpose()
+        candidates = np.vstack([generate_N_points_within_bbox(samples_per_leaf_bbox[i],
+                                                    bboxes[i])
+                                for i in range(len(volumes))])
+        np.random.shuffle(candidates)
 
         # parallel process the following:
         parts_proximityQueries = [(part_ids[i],
@@ -94,7 +130,7 @@ def sample_N_points_within_cvxs(N, leaves, use_bbox_as_backup=False):
 
         membership = distance_per_part >= 0
         point_idxs, part_id_idxs = np.where(membership)
-        membership_per_sample = [[]] * membership.shape[0]  # length N list
+        membership_per_sample = [[] for i in range(membership.shape[0])]  # length N list
 
         for i in range(len(point_idxs)):
             membership_per_sample[point_idxs[i]]\
@@ -116,7 +152,6 @@ def sample_N_points_within_cvxs(N, leaves, use_bbox_as_backup=False):
     return samples, memberships
 
 if __name__ == '__main__':
-    import ipdb; ipdb.set_trace()
     if len(sys.argv) > 1:
         N = int(sys.argv[1])
     if len(sys.argv) > 2:

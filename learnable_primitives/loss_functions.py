@@ -408,7 +408,10 @@ def pcl_to_prim_loss(
     # inside-outside function
     F = shapes.new_tensor(0)
     inside = None
-    if not use_chamfer:
+
+    # XXX
+    # if not use_chamfer: # you should still calculate the F's regardless...
+    if True:
         if use_cuboids:
             F = points_to_cuboid_distances(X_transformed, shapes)
             inside = F <= 0

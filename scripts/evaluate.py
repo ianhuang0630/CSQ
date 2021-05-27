@@ -217,7 +217,8 @@ def main(argv):
         model_tag = model_tags[sample_idx]
         print('evaluating model_tag {}'.format(model_tag))
 
-        X, y_target = sample
+        X, y_target = sample[1]
+
         X, y_target = X.to(device), y_target.to(device)
 
         # Do the forward pass and estimate the primitive parameters
